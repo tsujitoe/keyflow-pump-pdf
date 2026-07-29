@@ -1,0 +1,4 @@
+interface:
+  display_name: "KEYFLOW 泵浦 PDF 修改"
+  short_description: "依規則轉換及驗證 KEYFLOW 泵浦規格 PDF 文件。"
+  default_prompt: "Use $keyflow-pump-pdf to modify this pump PDF into a KEYFLOW version."
