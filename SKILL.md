@@ -89,6 +89,8 @@ For every new GS source, execute this source-driven workflow before considering 
 6. Apply Grade 1U maths and all KEYFLOW edits to the discovered objects. Remove only the current source's max/min traces, Δp text/values/ticks/rightward fragments, and requested fields while preserving unrelated borders and the right vertical boundary.
 7. Flatten only after the native-vector draft passes chart, text, and whole-page checks. A flattened final is allowed for removal integrity only when it originates from the successfully mutated current source.
 
+When deleting a vector group, remove a complete, current-source object range with balanced graphics-state wrappers. Never splice a broad colour span such as `group[:max_colour] + group[rated_colour:]`, and never remove a path by colour token alone: doing so can delete an unmatched `q` or retain an unmatched `Q`, causing the remainder of the Performance Curve page to render blank. Validate `q`/`Q` and `BT`/`ET` balance on the mutated page stream before rendering it.
+
 Escalate only after recording evidence that the supplied file is genuinely non-vector/flattened, encrypted without an available password, corrupt, or lacks a uniquely separable chart object after the full current-source discovery above. State the measured reason and ask only for a missing performance value when it cannot be read. Never make Adobe Print/AI a routine prerequisite for an original EBARA GS vector PDF.
 
 ### Vector capability gate and evidence
@@ -195,6 +197,29 @@ Apply these rules in every computer and every session:
 - Update the original P2 and efficiency callout text objects in-place. Never clear their green boxes, recreate their borders, add a new pointer, or place replacement text on a rendered image.
 - Build a per-run object map before editing: every source efficiency label and callout value, its colour, font, stream location, and intended Grade 1U value. Use this map both for mutation and for verification. Do not use a manually typed list from another pump.
 - If an implementation has not yet completed native edits for a new GS model, continue current-file discovery, object mapping, and source-specific native-vector implementation. Do not label it unsupported or request another PDF solely because that model lacks a pre-existing helper. Escalate only for the evidenced non-vector, encrypted, corrupt, or irreducibly ambiguous conditions in General GS-model support; do not produce a best-effort raster PDF.
+
+### Per-source render and graphics-state release gate
+
+Run the bundled validator on **every** new-model output before claiming completion:
+
+```powershell
+& <bundled-python> <skill-folder>\scripts\verify_gs_pdf_release.py <source.pdf> <output.pdf> `
+  --forbid 'Test standard: ISO 9906:2012 - Grade3B' `
+  --forbid 'Max. Shaft Power at max. impeller'
+```
+
+Treat a non-zero exit as a release blocker. Do not weaken its page-2 ink or graphics-state checks, and do not deliver a file merely because `PdfReader` can extract text from it. The validator specifically rejects a visually blank Performance Curve page and unmatched `q`/`Q` graphics-state operators; these failures can be missed by text extraction and by a successful `PdfReader.write()` call.
+
+After the validator passes, render source, native draft, and final output at the same scale and inspect all three retained pages at 200%. Require the following visible invariants for every GS model:
+
+1. Page 2 visibly contains its title/header, requested-data table, Head graph, P2 graph, hydraulic-efficiency graph, NPSH graph, rated trace, green operating lines, and original chart borders. A blank or nearly blank page, even with valid extracted text or a three-page count, is a hard failure.
+2. Page 1 and page 3 have no visible customer-information table, customer labels, date, or residual header-cell rules. Remove the whole customer-information block rather than only its values.
+3. Every retained footer visibly uses `assets/siyueh-logo.jpg`; no EBARA logo or wordmark may remain. Inspect raster/XObject content visually because text extraction cannot detect an unchanged image logo.
+4. Every visible pump name is a complete `AHe …` string, and `SIYUEH` and `TECO Standard` render as those exact words with no missing CID glyph, square, spacing artefact, or source residue.
+5. Both connection cells contain exactly `ANSI 150LB RF SF` and no `EN`, `PN16`, or concatenated source fragment. Replace a cell's complete native glyph run, not an arbitrary substring such as `EN`.
+6. The `Max. Shaft Power` label is fully renamed and its value is the rated-impeller P2 value at the operating point, with `kW` preserved. Motor Type retains only text after the first underscore; Specific design is exactly `60Hz`; and Frame size, Weight, and Electric current values are visibly blank without damaged borders.
+
+Use a verified prior output only as an appearance and completeness baseline; never copy its coordinates, curve values, stream offsets, or glyph codes into a different model.
 
 ### Known-profile toolchain and output-proof gate
 
