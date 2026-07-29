@@ -1,6 +1,6 @@
 ---
 name: keyflow-pump-pdf
-description: Modify EBARA GS-series pump specification PDFs into KEYFLOW AHe-series PDFs. Use when updating brand, headers, model numbers, performance data, ISO 9906 Grade 1U efficiency curves, motor data, materials, dimensions, or pages in this PDF family; compare a source PDF to a supplied target or create a verified modified PDF with true table-cell content replacement and preserved borders.
+description: Modify original EBARA GS-series pump specification PDFs of any GS model into KEYFLOW AHe-series PDFs. Use when updating brand, headers, model numbers, performance data, ISO 9906 Grade 1U curves, motor data, materials, dimensions, or pages; dynamically analyse each source vector PDF rather than limiting work to a previously tested model, then create a verified PDF with true table-cell replacement and preserved borders.
 ---
 
 # KEYFLOW pump PDF modification
@@ -73,6 +73,24 @@ Override step 3 above: divide the series by 10. Round only a non-zero original o
 
 ## Performance page
 
+### General GS-model support — no template refusal
+
+Treat an original EBARA GS-series vector datasheet as the normal supported input, regardless of model number, impeller diameter, motor pole count, page-2 stream layout, file hash, or whether the skill already contains a converter for that exact file. `GS 100-250 /22` is in scope just as `GS 40-160 /15` is.
+
+Do **not** refuse, request an Adobe Print/AI file, or say that a conversion is unavailable merely because the source differs from the GS 40-160 profile or lacks a pre-validated converter. The supplied original EBARA PDF is the authority; analyse that current file and perform the conversion from it.
+
+For every new GS source, execute this source-driven workflow before considering escalation:
+
+1. Render and extract the four source pages. Confirm that page 2 contains selectable/vector chart objects and identify the current Technical Data, Performance Curve, Dimensions, and Construction pages.
+2. Decode the current page-2 content stream. Discover clipping rectangles/groups from its own `q`, clipping, path, colour, and text operators; do not search only for GS 40-160 byte signatures and do not reuse their coordinates.
+3. Build a current-source object map for Head, P2, hydraulic efficiency, and NPSH: rated/max/min traces and markers, P2/efficiency zero lines, green operating lines/callouts, Head-panel efficiency labels, and the right-side Δp scale. Use only current source anchors, colours, paths, fonts, and glyph encodings.
+4. Derive a current-source CID/glyph map from embedded fonts and existing glyph runs. Mutate only encoded native operands and vector path coordinates. If a label is represented differently, inspect its local `Tj`/`TJ`/`Td`/`Tm` operands and extend the object map; never treat that difference as an unsupported model.
+5. Create a temporary source-specific native-vector mutation script when repeated discovery or transformation is required. Derive every selector and coordinate from the current input's object map; do not transplant selectors from another model. Run it on the current original PDF, render the draft, compare at 200%, correct the map, and continue.
+6. Apply Grade 1U maths and all KEYFLOW edits to the discovered objects. Remove only the current source's max/min traces, Δp text/values/ticks/rightward fragments, and requested fields while preserving unrelated borders and the right vertical boundary.
+7. Flatten only after the native-vector draft passes chart, text, and whole-page checks. A flattened final is allowed for removal integrity only when it originates from the successfully mutated current source.
+
+Escalate only after recording evidence that the supplied file is genuinely non-vector/flattened, encrypted without an available password, corrupt, or lacks a uniquely separable chart object after the full current-source discovery above. State the measured reason and ask only for a missing performance value when it cannot be read. Never make Adobe Print/AI a routine prerequisite for an original EBARA GS vector PDF.
+
 ### Vector capability gate and evidence
 
 Before making any performance-page change, prove that the current input can be edited safely as a vector PDF. This is a delivery gate, not an optional diagnostic.
@@ -92,6 +110,8 @@ Before making any performance-page change, prove that the current input can be e
 8. A static final PDF is permitted only after all vector mutations pass the verification checks below. It may flatten successful edits; it must never be the mechanism used to perform a curve, marker, green-callout, or chart-label edit.
 
 ### Known-compatible EBARA source profile
+
+This is an optimisation profile for one repeatedly tested file, **not** the boundary of supported GS models. Use its helper only when the current source matches it exactly. For every other original EBARA GS vector source, use the General GS-model support workflow above and develop the current-file object map and mutation in the same task.
 
 The original `Datasheet_GS_40-160_2P60Hz.pdf` is a supported vector source, not a reason by itself to request an Adobe Print file. When the input has SHA-256 `C8311DE112F28439879F28F014BE2F018A102F5CB0699753168B3BE36726E2F5`, 4 pages, and its page-2 decoded raw content stream contains each of these clip signatures exactly once:
 
@@ -174,7 +194,7 @@ Apply these rules in every computer and every session:
 - For a compatible vector GS datasheet, modify the current page's content stream: remove source glyph/path objects, update native glyph codes and `Td`/`Tm` anchors, update vector curve paths and markers, then render for inspection. Preserve all unrelated source stream objects.
 - Update the original P2 and efficiency callout text objects in-place. Never clear their green boxes, recreate their borders, add a new pointer, or place replacement text on a rendered image.
 - Build a per-run object map before editing: every source efficiency label and callout value, its colour, font, stream location, and intended Grade 1U value. Use this map both for mutation and for verification. Do not use a manually typed list from another pump.
-- If an implementation cannot complete these native edits, report the source as unsupported and request a compatible vector PDF. Do not produce a “best effort” raster PDF.
+- If an implementation has not yet completed native edits for a new GS model, continue current-file discovery, object mapping, and source-specific native-vector implementation. Do not label it unsupported or request another PDF solely because that model lacks a pre-existing helper. Escalate only for the evidenced non-vector, encrypted, corrupt, or irreducibly ambiguous conditions in General GS-model support; do not produce a best-effort raster PDF.
 
 ### Known-profile toolchain and output-proof gate
 
@@ -249,3 +269,4 @@ For this profile, explicitly inspect the page-2 right edge after rendering: none
 7. Flag, rather than silently correct, source-data conflicts that are not covered by these rules.
 8. Deliver the edited PDF and a short list of values applied, including the Grade 1U choice and the casing value supplied by the user.
 9. Include the run manifest and state explicitly whether the delivered PDF is a native-vector PDF or a post-verification flattened PDF.
+
